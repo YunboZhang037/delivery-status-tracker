@@ -192,6 +192,8 @@ _DB_VIEWER_HTML = """<!DOCTYPE html>
   .type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'SF Mono', Monaco, monospace; background: #e3f2fd; color: #1565c0; }
   .nullable-yes { color: #999; font-size: 12px; }
   .nullable-no { color: #e53935; font-size: 12px; font-weight: 600; }
+  .default-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+  .default-val { font-family: 'SF Mono', Monaco, monospace; font-size: 12px; color: #666; background: #f5f5f5; padding: 1px 6px; border-radius: 3px; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .data-table th { background: #667eea; color: white; padding: 10px 16px; text-align: left; font-weight: 600; white-space: nowrap; position: sticky; top: 0; }
   .data-table td { padding: 8px 16px; border-bottom: 1px solid #f0f0f0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -271,7 +273,16 @@ async function selectTable(name, tabEl) {
     'Table: <span>' + name + '</span> | Columns: <span>' + struct.length + '</span> | Rows: <span>' + data.rows.length + '</span>';
   let structHTML = '<table class="structure-table"><tr><th>Column</th><th>Type</th><th>Nullable</th><th>Default</th></tr>';
   struct.forEach(c => {
-    structHTML += '<tr><td>' + c.column + '</td><td><span class="type-badge">' + c.type + '</span></td><td class="' + (c.nullable === 'YES' ? 'nullable-yes' : 'nullable-no') + '">' + (c.nullable === 'YES' ? 'NULL' : 'NOT NULL') + '</td><td>' + (c.default || '—') + '</td></tr>';
+    let def = c.default;
+    let defHTML;
+    if (!def) {
+      defHTML = '—';
+    } else if (def.indexOf('nextval') !== -1) {
+      defHTML = '<span class="default-badge">auto-increment</span>';
+    } else {
+      defHTML = '<code class="default-val">' + def + '</code>';
+    }
+    structHTML += '<tr><td>' + c.column + '</td><td><span class="type-badge">' + c.type + '</span></td><td class="' + (c.nullable === 'YES' ? 'nullable-yes' : 'nullable-no') + '">' + (c.nullable === 'YES' ? 'NULL' : 'NOT NULL') + '</td><td>' + defHTML + '</td></tr>';
   });
   structHTML += '</table>';
   document.getElementById('structure').innerHTML = structHTML;
