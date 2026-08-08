@@ -52,7 +52,7 @@ See [What I'd Do Next](#what-id-do-next) for the prioritized backlog of improvem
 ### Option A — Docker Compose (recommended, zero prerequisites)
 
 ```bash
-git clone <repo-url> delivery-status-tracker
+git clone https://github.com/YunboZhang037/delivery-status-tracker.git delivery-status-tracker
 cd delivery-status-tracker
 
 # One command — spins up PostgreSQL, backend API, and frontend UI
@@ -69,7 +69,7 @@ Press `Ctrl+C` to stop. Add `--build` to rebuild after code changes.
 ### Option B — Local dev (requires PostgreSQL pre-installed)
 
 ```bash
-git clone <repo-url> delivery-status-tracker
+git clone https://github.com/YunboZhang037/delivery-status-tracker.git delivery-status-tracker
 cd delivery-status-tracker
 
 # Install dependencies and seed the database (first time only)
