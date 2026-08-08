@@ -71,6 +71,11 @@ def update_status(
         validate_transition(shipment.status, payload.status)
     except InvalidTransitionError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    except ValueError as e:
+        # Defensive: current status comes from the DB, which could hold
+        # stale/unknown values (e.g. hand-edited data). Don't let that
+        # surface as a 500 — report it as a client error instead.
+        raise HTTPException(status_code=409, detail=str(e))
 
     # Record history
     history_entry = StatusHistory(
@@ -104,6 +109,14 @@ def db_viewer():
     return _DB_VIEWER_HTML
 
 
+# Tables the built-in DB viewer is allowed to show.
+# Identifiers stay out of raw SQL entirely: row counts go through the ORM.
+_VIEWABLE_TABLES = {
+    Shipment.__tablename__: lambda db: db.query(Shipment).count(),
+    StatusHistory.__tablename__: lambda db: db.query(StatusHistory).count(),
+}
+
+
 @app.get("/api/db/tables")
 def list_tables(db: Session = Depends(get_db)):
     """List all tables with row counts."""
@@ -118,8 +131,9 @@ def list_tables(db: Session = Depends(get_db)):
     tables = []
     for row in result:
         tbl = row[0]
-        count = db.execute(text(f'SELECT count(*) FROM "{tbl}"')).scalar()
-        tables.append({"name": tbl, "columns": row[1], "rows": count})
+        if tbl not in _VIEWABLE_TABLES:
+            continue
+        tables.append({"name": tbl, "columns": row[1], "rows": _VIEWABLE_TABLES[tbl](db)})
     return tables
 
 

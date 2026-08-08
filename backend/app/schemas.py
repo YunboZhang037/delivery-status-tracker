@@ -1,6 +1,13 @@
 """Pydantic schemas for API request/response validation."""
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, Field
+
+from app.state_machine import VALID_STATUSES
+
+# Status values accepted by the API — mirrors the state machine.
+# A tuple preserves a stable order for the error message.
+VALID_STATUS_TUPLE = tuple(sorted(VALID_STATUSES))
 
 
 class ShipmentOut(BaseModel):
@@ -17,7 +24,7 @@ class ShipmentOut(BaseModel):
 
 class StatusUpdateIn(BaseModel):
     """Request body for updating a shipment's status."""
-    status: str = Field(..., description="New status: created, picked_up, in_transit, delivered, or failed")
+    status: Literal[*VALID_STATUS_TUPLE] = Field(..., description="New status: created, picked_up, in_transit, delivered, or failed")
     note: str | None = Field(None, description="Optional note for the status change (e.g., failure reason)")
 
 

@@ -148,3 +148,33 @@ class TestUpdateStatus:
         assert resp.status_code == 200
         history = client.get("/api/shipments/TV-001/history").json()
         assert history[0]["note"] is None
+
+    # ── Unknown-status boundary (regression: used to raise 500) ──
+    def test_unknown_status_rejected_422(self):
+        """A status that is not part of the state machine must be a client error (422), not a 500."""
+        _seed_shipment(reference="TV-001", status="created")
+        resp = client.patch("/api/shipments/TV-001/status", json={"status": "bogus"})
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        # The validation error should point at the `status` field
+        assert any("status" in err["loc"] for err in detail)
+
+    def test_non_string_status_rejected_422(self):
+        """Non-string values (e.g. numbers) must also be rejected as client errors."""
+        _seed_shipment(reference="TV-001", status="created")
+        resp = client.patch("/api/shipments/TV-001/status", json={"status": 123})
+        assert resp.status_code == 422
+
+    def test_valid_enum_but_illegal_transition_still_409(self):
+        """Literal validation must not swallow state-machine semantics:
+        a *legal* status that is an *illegal transition* still returns 409."""
+        _seed_shipment(reference="TV-001", status="created")
+        resp = client.patch("/api/shipments/TV-001/status", json={"status": "delivered"})
+        assert resp.status_code == 409
+        assert "Cannot transition" in resp.json()["detail"]
+
+    def test_missing_status_field_422(self):
+        """Payload without a status field is a validation error, not a 500."""
+        _seed_shipment(reference="TV-001", status="created")
+        resp = client.patch("/api/shipments/TV-001/status", json={"note": "no status"})
+        assert resp.status_code == 422
