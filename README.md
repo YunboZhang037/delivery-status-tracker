@@ -66,7 +66,7 @@ This runs `scripts/dev.sh`, which starts PostgreSQL, seeds the database, and lau
 
 ### Option B — Manual startup
 
-### Prerequisites
+#### Prerequisites
 
 | Tool | Version | Notes |
 |---|---|---|
@@ -74,7 +74,7 @@ This runs `scripts/dev.sh`, which starts PostgreSQL, seeds the database, and lau
 | **Node.js** | 18+ | Frontend runtime |
 | **PostgreSQL** | 14+ | Database |
 
-### 1. Start PostgreSQL
+#### 1. Start PostgreSQL
 
 ```bash
 # If PostgreSQL is already running, skip this step
@@ -90,7 +90,7 @@ Create the database:
 createdb delivery_tracker
 ```
 
-### 2. Start the Backend API
+#### 2. Start the Backend API
 
 ```bash
 cd backend
@@ -111,7 +111,7 @@ uvicorn app.main:app --reload --port 8000
 
 The API is now live at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
 
-### 3. Start the Frontend UI
+#### 3. Start the Frontend UI
 
 ```bash
 cd frontend

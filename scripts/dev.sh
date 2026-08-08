@@ -14,13 +14,41 @@ echo ""
 
 # ── 1. Ensure PostgreSQL is running ──────────────────────
 if ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
-    PG_CTL="$HOME/postgresql/pg_ctl.sh"
-    if [ -f "$PG_CTL" ]; then
-        echo "[1/4] Starting PostgreSQL..."
-        bash "$PG_CTL" start
+    echo "[1/4] PostgreSQL not running. Attempting to start..."
+
+    # Try common methods in order of likelihood
+    if command -v brew >/dev/null 2>&1 && brew services list 2>/dev/null | grep -q postgresql; then
+        brew services start postgresql
+    elif [ -f "$HOME/postgresql/pg_ctl.sh" ]; then
+        bash "$HOME/postgresql/pg_ctl.sh" start
+    elif command -v pg_ctl >/dev/null 2>&1; then
+        PGDATA="${PGDATA:-/usr/local/var/postgres}"
+        pg_ctl -D "$PGDATA" start
+    elif command -v docker >/dev/null 2>&1; then
+        docker start postgres 2>/dev/null || \
+            docker run --name postgres -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres:16
     else
-        echo "[1/4] PostgreSQL not running and pg_ctl.sh not found."
-        echo "      Start PostgreSQL manually, then re-run this script."
+        echo "      Could not auto-start PostgreSQL."
+        echo "      Please start PostgreSQL manually, then re-run this script."
+        echo "      Common methods:"
+        echo "        brew services start postgresql"
+        echo "        pg_ctl -D /usr/local/var/postgres start"
+        echo "        docker run --name pg -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres:16"
+        exit 1
+    fi
+
+    # Wait for PostgreSQL to be ready
+    for i in $(seq 1 10); do
+        if pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+            echo "      PostgreSQL is now running."
+            break
+        fi
+        sleep 1
+    done
+
+    if ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+        echo "      PostgreSQL failed to start within 10 seconds."
+        echo "      Please start it manually, then re-run this script."
         exit 1
     fi
 else

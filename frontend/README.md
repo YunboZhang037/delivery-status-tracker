@@ -1,16 +1,50 @@
-# React + Vite
+# Frontend — Delivery Status Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React UI for tracking shipment delivery statuses, built with Vite + TanStack Query.
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# From project root
+make dev    # starts backend + frontend together
 
-## React Compiler
+# Or standalone
+cd frontend
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The UI runs on `http://localhost:5173` and proxies `/api` requests to the backend on port 8000.
 
-## Expanding the Oxlint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **Filter tabs** — All / Created / Picked Up / In Transit / Delivered / Failed, each with live count badges
+- **Inline status updates** — Dropdown shows only valid next states (same state machine as backend)
+- **No page reload** — TanStack Query auto-refetches after mutations
+- **Detail modal** — Click any row to see full shipment info + status history timeline
+- **Error toasts** — Invalid transitions and network errors shown as dismissible notifications
+
+## Tech Stack
+
+| Library | Purpose |
+|---|---|
+| Vite | Build tool + dev server with HMR |
+| React 19 | UI framework |
+| TanStack Query | Server-state management (caching, invalidation) |
+| Axios | HTTP client |
+
+## Project Structure
+
+```
+frontend/src/
+├── main.jsx                          # Entry point + QueryClientProvider
+├── App.jsx                           # Layout + header
+├── api/shipments.js                  # Axios client + state machine constants
+├── components/
+│   ├── ShipmentList.jsx              # Table + filter tabs + row click
+│   ├── StatusBadge.jsx               # Colored status pill
+│   ├── StatusUpdateMenu.jsx          # Dropdown (only valid transitions)
+│   └── ShipmentDetailModal.jsx       # Detail view + history timeline
+├── App.css
+└── index.css
+```

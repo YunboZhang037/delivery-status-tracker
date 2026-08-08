@@ -11,6 +11,10 @@ dev: ## Start all services (PostgreSQL + backend + frontend)
 setup: ## Install dependencies and seed database
 	cd backend && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 	cd frontend && npm install
+	@echo "Creating database 'delivery_tracker' (if not exists)..."
+	@psql -h localhost -p 5432 -U postgres -lqt 2>/dev/null | grep -qw delivery_tracker || \
+		createdb -h localhost -p 5432 -U postgres delivery_tracker || \
+		(echo "  Could not create database. Ensure PostgreSQL is running on :5432." && exit 1)
 	cd backend && source .venv/bin/activate && python -m app.seed
 	@echo ""
 	@echo "Setup complete! Run 'make dev' to start."

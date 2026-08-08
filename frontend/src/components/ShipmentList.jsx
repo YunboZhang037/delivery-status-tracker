@@ -21,7 +21,7 @@ export default function ShipmentList() {
     ? allShipments
     : allShipments?.filter((s) => s.status === filter)
 
-  const { data: selectedShipment } = useQuery({
+  const { data: selectedShipment, isLoading: detailLoading } = useQuery({
     queryKey: ['shipment', selectedRef],
     queryFn: () => fetchShipmentDetail(selectedRef),
     enabled: !!selectedRef,
@@ -123,9 +123,10 @@ export default function ShipmentList() {
       </div>
 
       {/* Detail modal */}
-      {selectedShipment && (
+      {(selectedShipment || detailLoading) && (
         <ShipmentDetailModal
           shipment={selectedShipment}
+          loading={detailLoading}
           onClose={() => setSelectedRef(null)}
         />
       )}

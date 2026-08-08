@@ -11,6 +11,8 @@ const ACTION_STYLES = {
 
 export default function StatusUpdateMenu({ shipment, onError }) {
   const [open, setOpen] = useState(false)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
   const ref = useRef(null)
   const queryClient = useQueryClient()
 
@@ -44,40 +46,95 @@ export default function StatusUpdateMenu({ shipment, onError }) {
     return <span className="terminal-label">—</span>
   }
 
+  function handleStatusClick(status) {
+    if (status === 'failed') {
+      setNoteText('')
+      setShowNoteModal(true)
+      setOpen(false)
+    } else {
+      mutation.mutate({ reference: shipment.reference, status })
+    }
+  }
+
+  function confirmFailure() {
+    mutation.mutate({
+      reference: shipment.reference,
+      status: 'failed',
+      note: noteText.trim() || undefined,
+    })
+    setShowNoteModal(false)
+  }
+
   return (
-    <div className="status-update-menu" ref={ref}>
-      <button
-        className="update-btn"
-        onClick={() => setOpen(!open)}
-        disabled={mutation.isPending}
-      >
-        {mutation.isPending ? 'Updating...' : 'Update ▾'}
-      </button>
-      {open && (
-        <div className="dropdown-menu">
-          {nextStatuses.map((status) => {
-            const style = ACTION_STYLES[status]
-            return (
+    <>
+      <div className="status-update-menu" ref={ref}>
+        <button
+          className="update-btn"
+          onClick={() => setOpen(!open)}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? 'Updating...' : 'Update ▾'}
+        </button>
+        {open && (
+          <div className="dropdown-menu">
+            {nextStatuses.map((status) => {
+              const style = ACTION_STYLES[status]
+              return (
+                <button
+                  key={status}
+                  className="dropdown-item"
+                  onClick={() => handleStatusClick(status)}
+                >
+                  <span className="dropdown-icon">{style.icon}</span>
+                  {style.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {showNoteModal && (
+        <div className="modal-overlay" onClick={() => setShowNoteModal(false)}>
+          <div
+            className="note-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="note-modal-header">
+              <h3>❌ Mark as Failed</h3>
+              <button className="modal-close" onClick={() => setShowNoteModal(false)}>✕</button>
+            </div>
+            <div className="note-modal-body">
+              <label className="note-modal-label">
+                Reason for failure <span className="note-optional">(optional)</span>
+              </label>
+              <textarea
+                className="note-modal-input"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="e.g., Customer not available for pickup"
+                autoFocus
+                rows={3}
+              />
+            </div>
+            <div className="note-modal-actions">
               <button
-                key={status}
-                className="dropdown-item"
-                onClick={() => {
-                  if (status === 'failed') {
-                    const note = window.prompt('Optional: enter a reason for failure (can be left blank)')
-                    if (note === null) return
-                    mutation.mutate({ reference: shipment.reference, status, note: note || undefined })
-                  } else {
-                    mutation.mutate({ reference: shipment.reference, status })
-                  }
-                }}
+                className="note-modal-cancel"
+                onClick={() => setShowNoteModal(false)}
               >
-                <span className="dropdown-icon">{style.icon}</span>
-                {style.label}
+                Cancel
               </button>
-            )
-          })}
+              <button
+                className="note-modal-confirm"
+                onClick={confirmFailure}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? 'Updating...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

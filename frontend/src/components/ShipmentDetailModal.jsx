@@ -1,7 +1,20 @@
 import { STATUS_LABELS } from '../api/shipments'
 import StatusBadge from './StatusBadge'
 
-export default function ShipmentDetailModal({ shipment, onClose }) {
+export default function ShipmentDetailModal({ shipment, onClose, loading }) {
+  if (loading) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-loading">
+            <div className="modal-spinner" />
+            <p>Loading shipment details...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!shipment) return null
 
   const history = shipment.history || []

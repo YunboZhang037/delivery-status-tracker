@@ -143,7 +143,7 @@ def table_data(table: str, limit: int = 100, db: Session = Depends(get_db)):
     allowed = {"shipments", "status_history"}
     if table not in allowed:
         raise HTTPException(status_code=400, detail="Invalid table name")
-    result = db.execute(text(f'SELECT * FROM "{table}" ORDER BY 1 LIMIT {limit}'))
+    result = db.execute(text(f'SELECT * FROM "{table}" ORDER BY 1 LIMIT :limit'), {"limit": limit})
     columns = list(result.keys())
     rows = [dict(zip(columns, row)) for row in result]
     return {"columns": columns, "rows": rows}
@@ -155,6 +155,9 @@ def run_query(query: str, db: Session = Depends(get_db)):
     q = query.strip().lower()
     if not q.startswith("select"):
         raise HTTPException(status_code=400, detail="Only SELECT queries are allowed")
+    # Prevent SQL injection via multi-statement attacks (e.g., "SELECT 1; DROP TABLE ...")
+    if ";" in query.strip().rstrip(";"):
+        raise HTTPException(status_code=400, detail="Multiple statements are not allowed")
     result = db.execute(text(query))
     columns = list(result.keys())
     rows = [dict(zip(columns, row)) for row in result]
