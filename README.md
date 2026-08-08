@@ -6,8 +6,33 @@ A full-stack web application for tracking shipment delivery statuses — built a
 
 ---
 
+## ⏱ Timebox Summary
+
+> **Effort: ~3.5 hours** | **Constraint: 3–4 hour timebox, due within 2 days**
+>
+> *Per the assignment brief: "Stop at the timebox and write down what you would do next — unfinished-but-well-reasoned beats gold-plating."*
+
+### ✅ Completed within the timebox
+
+| Area | Deliverable | Status |
+|---|---|---|
+| **Database** | PostgreSQL schema (`shipments` + `status_history`), idempotent CSV seed (20 records) | ✅ Done |
+| **Backend** | FastAPI REST API — list, filter, detail, status update, history | ✅ Done |
+| **State machine** | Server-side transition validation with 409 on invalid moves | ✅ Done |
+| **Frontend** | React UI — filter tabs, inline status updates, detail modal with history timeline | ✅ Done |
+| **Testing** | 28 tests (16 state machine + 8 API), all passing | ✅ Done |
+| **DB viewer** | Built-in `/db` page for browsing tables and running queries | ✅ Done |
+| **Documentation** | README, API reference, architecture notes, AI usage disclosure | ✅ Done |
+
+### 📋 Stopped here — what I'd do next
+
+See [What I'd Do Next](#what-id-do-next) for the prioritized backlog of improvements that were intentionally deferred at the timebox boundary.
+
+---
+
 ## Table of Contents
 
+- [⏱ Timebox Summary](#-timebox-summary)
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Status Lifecycle](#status-lifecycle)
@@ -325,12 +350,32 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 
 ## What I'd Do Next
 
-Given more time beyond the 3–4 hour timebox, here's what I'd prioritize:
+> **Stopped at the 3–4 hour timebox.** The items below are intentionally deferred — not missing. Each is prioritized by impact and scoped so a reviewer can see the reasoning.
 
-1. **Docker Compose for single-command startup** — `docker compose up` spins up PostgreSQL, API, and UI with CSV auto-seeded. This is the highest-impact addition for demo reliability.
-2. **Frontend testing** — Add Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
-3. **Pagination** — The list endpoint currently returns all records. For a real product, server-side pagination with cursor-based navigation would be essential.
-4. **Optimistic updates** — Show the new status immediately in the UI before the server confirms, with rollback on error.
-5. **Status transition notes** — The `status_history.note` column exists but isn't exposed in the UI. Adding an optional "reason" field on failed transitions would be valuable for operations teams.
-6. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
-7. **Input validation hardening** — Add server-side validation for customer name length, reference format patterns, and rate limiting on the update endpoint.
+### Priority 1 — Demo reliability & deployment
+
+1. **Docker Compose for single-command startup** — `docker compose up` spins up PostgreSQL, API, and UI with CSV auto-seeded. This is the highest-impact addition: it eliminates the "works on my machine" risk for anyone reviewing the submission.
+2. **CI pipeline** — GitHub Actions workflow that runs the 28-test suite on every push, ensuring the repo is always in a green state.
+
+### Priority 2 — Production readiness
+
+3. **Pagination** — The list endpoint currently returns all 20 records. For a real product, server-side pagination with cursor-based navigation would be essential.
+4. **Input validation hardening** — Server-side validation for customer name length, reference format patterns, and rate limiting on the update endpoint.
+5. **Authentication & authorization** — Role-based access (e.g., operators can update status, viewers can only read). Currently all endpoints are open.
+6. **Structured logging & error tracking** — Replace print-style debugging with proper logging (structlog/loguru) and integrate Sentry for error monitoring.
+
+### Priority 3 — UX polish
+
+7. **Optimistic updates** — Show the new status immediately in the UI before the server confirms, with rollback on error.
+8. **Status transition notes** — The `status_history.note` column exists but isn't exposed in the UI. Adding an optional "reason" field on failed transitions would be valuable for operations teams.
+9. **Frontend testing** — Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
+10. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
+
+### What I intentionally did NOT do (and why)
+
+| Skipped | Reason |
+|---|---|
+| Docker Compose | Timebox — chose to ship a working local dev experience first |
+| User auth | Out of scope for the assignment brief; would add complexity without demonstrating the core state machine |
+| Pagination | 20 records don't warrant it; would add premature complexity |
+| i18n / a11y audit | Important for production, but the assignment focuses on the status tracking vertical slice |
