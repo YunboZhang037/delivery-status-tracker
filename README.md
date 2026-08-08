@@ -372,7 +372,7 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 | SQLAlchemy models, schemas, state machine | ✅ | Reviewed logic against requirements |
 | FastAPI routes and seed script | ✅ | Verified against API spec |
 | React components and API client | ✅ | Reviewed UX flow |
-| Test suite (28 tests) | ✅ | Reviewed coverage, added edge cases |
+| Test suite (30 tests) | ✅ | Reviewed coverage, added edge cases |
 | README | ✅ | Edited for accuracy |
 | Architecture & tooling decisions | Partial | Human chose the stack; AI executed |
 | PyCharm venv configuration | Partial | AI modified config files; human verified |

@@ -66,6 +66,9 @@ export default function ShipmentDetailModal({ shipment, onClose }) {
                       <span className="timeline-time">
                         {formatDateTime(entry.changed_at)}
                       </span>
+                      {entry.note && (
+                        <span className="timeline-note">{entry.note}</span>
+                      )}
                     </div>
                   </div>
                 ))}

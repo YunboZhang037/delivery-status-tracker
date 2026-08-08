@@ -479,6 +479,14 @@ body {
   color: #888;
 }
 
+.timeline-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #c62828;
+  font-style: italic;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .app-main {

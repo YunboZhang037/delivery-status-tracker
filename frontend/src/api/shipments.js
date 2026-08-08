@@ -16,10 +16,10 @@ export async function fetchShipmentDetail(reference) {
   return data
 }
 
-export async function updateShipmentStatus(reference, newStatus) {
-  const { data } = await api.patch(`/shipments/${reference}/status`, {
-    status: newStatus,
-  })
+export async function updateShipmentStatus(reference, newStatus, note) {
+  const body = { status: newStatus }
+  if (note) body.note = note
+  const { data } = await api.patch(`/shipments/${reference}/status`, body)
   return data
 }
 

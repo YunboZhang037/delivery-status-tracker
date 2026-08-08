@@ -15,7 +15,7 @@ export default function StatusUpdateMenu({ shipment, onError }) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: ({ reference, status }) => updateShipmentStatus(reference, status),
+    mutationFn: ({ reference, status, note }) => updateShipmentStatus(reference, status, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] })
       queryClient.invalidateQueries({ queryKey: ['shipment', shipment.reference] })
@@ -61,9 +61,15 @@ export default function StatusUpdateMenu({ shipment, onError }) {
               <button
                 key={status}
                 className="dropdown-item"
-                onClick={() =>
-                  mutation.mutate({ reference: shipment.reference, status })
-                }
+                onClick={() => {
+                  if (status === 'failed') {
+                    const note = window.prompt('Optional: enter a reason for failure (can be left blank)')
+                    if (note === null) return
+                    mutation.mutate({ reference: shipment.reference, status, note: note || undefined })
+                  } else {
+                    mutation.mutate({ reference: shipment.reference, status })
+                  }
+                }}
               >
                 <span className="dropdown-icon">{style.icon}</span>
                 {style.label}
