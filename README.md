@@ -1,2 +1,15 @@
-# delivery-status-tracker
-A full-stack delivery status tracker built with FastAPI, React, and PostgreSQL.
+# Delivery Status Tracker
+
+## Quick start
+
+## Architecture
+
+## Status lifecycle
+
+## Testing
+
+## Key decisions
+
+## AI usage note
+
+## Todo
