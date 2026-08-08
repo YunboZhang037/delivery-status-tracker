@@ -1,4 +1,5 @@
 """FastAPI application — shipment tracking endpoints."""
+import re
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -170,11 +171,12 @@ def run_query(query: str, db: Session = Depends(get_db)):
     if ";" in q.rstrip(";"):
         raise HTTPException(status_code=400, detail="Multiple statements are not allowed")
 
-    # Layer 3: reject write/DDL keywords anywhere in the query
+    # Layer 3: reject write/DDL keywords using word-boundary matching
+    # (prevents false positives like "created" matching "create")
     dangerous = ["insert", "update", "delete", "drop", "alter", "truncate",
                  "create", "grant", "revoke", "copy", "vacuum"]
     for kw in dangerous:
-        if kw in ql:
+        if re.search(rf"\b{kw}\b", ql):
             raise HTTPException(
                 status_code=400,
                 detail=f"Keyword '{kw.upper()}' is not allowed in read-only queries"
@@ -194,7 +196,7 @@ def run_query(query: str, db: Session = Depends(get_db)):
 
 
 _DB_VIEWER_HTML = """<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

@@ -66,6 +66,8 @@ That's it. No PostgreSQL, Python, or Node.js installation required — Docker ha
 
 Press `Ctrl+C` to stop. Add `--build` to rebuild after code changes.
 
+> **Port note**: Docker maps PostgreSQL to host `:5432`. If you already have PostgreSQL running locally, either stop it first (`brew services stop postgresql` or `pg_ctl stop`) or change the host port in `docker-compose.yml` (e.g. `5433:5432`).
+
 ### Option B — Local dev (requires PostgreSQL pre-installed)
 
 ```bash
