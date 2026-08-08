@@ -21,7 +21,7 @@ A full-stack web application for tracking shipment delivery statuses — built a
 | **Backend** | FastAPI REST API — list, filter, detail, status update, history | ✅ Done |
 | **State machine** | Server-side transition validation with 409 on invalid moves | ✅ Done |
 | **Frontend** | React UI — filter tabs, inline status updates, detail modal with history timeline | ✅ Done |
-| **Testing** | 30 tests (20 state machine + 10 API), all passing | ✅ Done |
+| **Testing** | 32 tests (20 state machine + 12 API), all passing | ✅ Done |
 | **DB viewer** | Built-in `/db` page for browsing tables and running queries | ✅ Done |
 | **Documentation** | README, API reference, architecture notes, AI usage disclosure | ✅ Done |
 
@@ -49,7 +49,24 @@ See [What I'd Do Next](#what-id-do-next) for the prioritized backlog of improvem
 
 ## Quick Start
 
-### Option A — Single command (recommended)
+### Option A — Docker Compose (recommended, zero prerequisites)
+
+```bash
+git clone <repo-url> delivery-status-tracker
+cd delivery-status-tracker
+
+# One command — spins up PostgreSQL, backend API, and frontend UI
+docker compose up
+```
+
+That's it. No PostgreSQL, Python, or Node.js installation required — Docker handles everything:
+- PostgreSQL 16 on `:5432` (with auto-created `delivery_tracker` database)
+- FastAPI backend on `:8000` (auto-seeds 20 CSV records on startup)
+- React frontend on `:5173` (built and served via nginx)
+
+Press `Ctrl+C` to stop. Add `--build` to rebuild after code changes.
+
+### Option B — Local dev (requires PostgreSQL pre-installed)
 
 ```bash
 git clone <repo-url> delivery-status-tracker
@@ -64,7 +81,7 @@ make dev
 
 This runs `scripts/dev.sh`, which starts PostgreSQL, seeds the database, and launches both the backend (`:8000`) and frontend (`:5173`) in parallel. Press `Ctrl+C` to stop all services.
 
-### Option B — Manual startup
+### Option C — Manual startup
 
 #### Prerequisites
 
@@ -133,10 +150,12 @@ The UI is now live at `http://localhost:5173`. You should see 20 shipments loade
 
 ```
 delivery-status-tracker/
+├── docker-compose.yml             # docker compose up — zero-prerequisite single command
 ├── Makefile                        # make dev / make setup / make test / make seed
 ├── scripts/
-│   └── dev.sh                      # Single-command startup (PostgreSQL + API + UI)
+│   └── dev.sh                      # Local dev startup (PostgreSQL + API + UI)
 ├── backend/
+│   ├── Dockerfile                  # Backend container image
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── database.py          # SQLAlchemy engine, session, Base
@@ -147,7 +166,7 @@ delivery-status-tracker/
 │   │   └── seed.py              # CSV → PostgreSQL loader (idempotent)
 │   ├── tests/
 │   │   ├── test_state_machine.py   # 20 transition validation tests
-│   │   └── test_api.py             # 10 API endpoint tests
+│   │   └── test_api.py             # 12 API endpoint tests
 │   ├── requirements.txt
 │   └── shipments.csv            # 20 sample shipments
 ├── frontend/
@@ -315,12 +334,12 @@ source .venv/bin/activate
 python -m pytest tests/ -v
 ```
 
-**30 tests, all passing:**
+**32 tests, all passing:**
 
 | Test File | Tests | Coverage |
 |---|---|---|
 | `test_state_machine.py` | 20 | All valid transitions, all invalid transitions (skip steps, backwards, terminal states), error message quality, unknown status handling |
-| `test_api.py` | 10 | Empty list, list with data, filter by status, valid update, invalid update (409), terminal state (409), not found (404), history recorded, note recorded, note optional |
+| `test_api.py` | 12 | Empty list, list with data, filter by status, get single shipment (200 + 404), valid update, invalid update (409), terminal state (409), not found (404), history recorded, note recorded, note optional |
 
 API tests use an in-memory SQLite database with FastAPI's `TestClient` — no external dependencies, fast execution.
 
@@ -372,7 +391,7 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 | SQLAlchemy models, schemas, state machine | ✅ | Reviewed logic against requirements |
 | FastAPI routes and seed script | ✅ | Verified against API spec |
 | React components and API client | ✅ | Reviewed UX flow |
-| Test suite (30 tests) | ✅ | Reviewed coverage, added edge cases |
+| Test suite (32 tests) | ✅ | Reviewed coverage, added edge cases |
 | README | ✅ | Edited for accuracy |
 | Architecture & tooling decisions | Partial | Human chose the stack; AI executed |
 | PyCharm venv configuration | Partial | AI modified config files; human verified |
@@ -389,29 +408,27 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 
 > **Stopped at the 3–4 hour timebox.** The items below are intentionally deferred — not missing. Each is prioritized by impact and scoped so a reviewer can see the reasoning.
 
-### Priority 1 — Demo reliability & deployment
+### Priority 1 — Deployment & CI
 
-1. **Docker Compose** — While `make dev` provides single-command startup locally, a `docker compose up` would eliminate all environment setup for reviewers (no Python/Node/PostgreSQL install needed). This is the highest-impact addition for submission reliability.
-2. **CI pipeline** — GitHub Actions workflow that runs the 30-test suite on every push, ensuring the repo is always in a green state.
+1. **CI pipeline** — GitHub Actions workflow that runs the 32-test suite on every push, ensuring the repo is always in a green state.
 
 ### Priority 2 — Production readiness
 
-3. **Pagination** — The list endpoint currently returns all 20 records. For a real product, server-side pagination with cursor-based navigation would be essential.
-4. **Input validation hardening** — Server-side validation for customer name length, reference format patterns, and rate limiting on the update endpoint.
-5. **Authentication & authorization** — Role-based access (e.g., operators can update status, viewers can only read). Currently all endpoints are open.
-6. **Structured logging & error tracking** — Replace print-style debugging with proper logging (structlog/loguru) and integrate Sentry for error monitoring.
+2. **Pagination** — The list endpoint currently returns all 20 records. For a real product, server-side pagination with cursor-based navigation would be essential.
+3. **Input validation hardening** — Server-side validation for customer name length, reference format patterns, and rate limiting on the update endpoint.
+4. **Authentication & authorization** — Role-based access (e.g., operators can update status, viewers can only read). Currently all endpoints are open.
+5. **Structured logging & error tracking** — Replace print-style debugging with proper logging (structlog/loguru) and integrate Sentry for error monitoring.
 
 ### Priority 3 — UX polish
 
-7. **Optimistic updates** — Show the new status immediately in the UI before the server confirms, with rollback on error.
-8. **Frontend testing** — Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
-9. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
+6. **Optimistic updates** — Show the new status immediately in the UI before the server confirms, with rollback on error.
+7. **Frontend testing** — Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
+8. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
 
 ### What I intentionally did NOT do (and why)
 
 | Skipped | Reason |
 |---|---|
-| Docker Compose | Timebox — `make dev` provides single-command local startup; Docker would add container complexity without demonstrating the core state machine |
 | User auth | Out of scope for the assignment brief; would add complexity without demonstrating the core state machine |
 | Pagination | 20 records don't warrant it; would add premature complexity |
 | i18n / a11y audit | Important for production, but the assignment focuses on the status tracking vertical slice |

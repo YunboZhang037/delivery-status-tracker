@@ -80,6 +80,22 @@ class TestListShipments:
         assert all(s["status"] == "delivered" for s in data)
 
 
+class TestGetShipment:
+    def test_get_single_shipment(self):
+        _seed_shipment(reference="TV-001", status="in_transit", customer="Acme Corp")
+        resp = client.get("/api/shipments/TV-001")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["reference"] == "TV-001"
+        assert data["customer_name"] == "Acme Corp"
+        assert data["status"] == "in_transit"
+        assert "history" in data
+
+    def test_get_shipment_not_found(self):
+        resp = client.get("/api/shipments/NOT-EXIST")
+        assert resp.status_code == 404
+
+
 class TestUpdateStatus:
     def test_valid_transition(self):
         _seed_shipment(reference="TV-001", status="created")

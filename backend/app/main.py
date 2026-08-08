@@ -151,17 +151,46 @@ def table_data(table: str, limit: int = 100, db: Session = Depends(get_db)):
 
 @app.post("/api/db/query")
 def run_query(query: str, db: Session = Depends(get_db)):
-    """Run a read-only SQL query (SELECT only)."""
-    q = query.strip().lower()
-    if not q.startswith("select"):
+    """Run a read-only SQL query (SELECT only).
+
+    Security layers:
+    1. Must start with SELECT (case-insensitive)
+    2. Reject multiple statements (semicolon check)
+    3. Reject dangerous keywords (INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, etc.)
+    4. Execute in a read-only transaction (SET TRANSACTION READ ONLY)
+    """
+    q = query.strip()
+    ql = q.lower()
+
+    # Layer 1: must start with SELECT
+    if not ql.startswith("select"):
         raise HTTPException(status_code=400, detail="Only SELECT queries are allowed")
-    # Prevent SQL injection via multi-statement attacks (e.g., "SELECT 1; DROP TABLE ...")
-    if ";" in query.strip().rstrip(";"):
+
+    # Layer 2: no multiple statements
+    if ";" in q.rstrip(";"):
         raise HTTPException(status_code=400, detail="Multiple statements are not allowed")
-    result = db.execute(text(query))
-    columns = list(result.keys())
-    rows = [dict(zip(columns, row)) for row in result]
-    return {"columns": columns, "rows": rows}
+
+    # Layer 3: reject write/DDL keywords anywhere in the query
+    dangerous = ["insert", "update", "delete", "drop", "alter", "truncate",
+                 "create", "grant", "revoke", "copy", "vacuum"]
+    for kw in dangerous:
+        if kw in ql:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Keyword '{kw.upper()}' is not allowed in read-only queries"
+            )
+
+    # Layer 4: execute in a read-only transaction
+    db.execute(text("BEGIN READ ONLY"))
+    try:
+        result = db.execute(text(q))
+        columns = list(result.keys())
+        rows = [dict(zip(columns, row)) for row in result]
+        db.execute(text("COMMIT"))
+        return {"columns": columns, "rows": rows}
+    except Exception:
+        db.execute(text("ROLLBACK"))
+        raise
 
 
 _DB_VIEWER_HTML = """<!DOCTYPE html>

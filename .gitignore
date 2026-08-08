@@ -226,3 +226,7 @@ __marimo__/
 
 # IDE
 .idea/
+
+# Docker
+postgres-data/
+
