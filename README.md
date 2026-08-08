@@ -381,20 +381,22 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 
 ## AI Usage Note
 
-**Tools used**: Claude (via WorkBuddy) for code generation, refactoring, and test writing.
+**Tools used**: GLM-5.2 (via WorkBuddy, an AI coding agent built on Zhipu AI's GLM model) for code generation, refactoring, and test writing. The developer directed all architectural decisions, reviewed every line of AI output, and caught multiple issues through iterative review.
 
-### What AI generated vs. hand-written
+### What AI generated vs. what the developer did
 
-| Area | AI-Generated | Human |
+| Area | AI-Generated | Developer |
 |---|---|---|
-| Project scaffolding & file structure | ✅ | Reviewed and adjusted |
-| SQLAlchemy models, schemas, state machine | ✅ | Reviewed logic against requirements |
-| FastAPI routes and seed script | ✅ | Verified against API spec |
-| React components and API client | ✅ | Reviewed UX flow |
-| Test suite (32 tests) | ✅ | Reviewed coverage, added edge cases |
-| README | ✅ | Edited for accuracy |
-| Architecture & tooling decisions | Partial | Human chose the stack; AI executed |
-| PyCharm venv configuration | Partial | AI modified config files; human verified |
+| Project scaffolding & file structure | ✅ | Designed architecture; caught and removed leftover Vite template assets |
+| SQLAlchemy models, schemas, state machine | ✅ | Verified state transitions against PDF spec; caught `datetime.utcnow()` deprecation |
+| FastAPI routes and seed script | ✅ | Identified SQL injection risk in `/api/db/query`; directed 4-layer defense |
+| React components and API client | ✅ | Flagged `window.prompt()` as poor UX; caught filter badge disappearing bug |
+| Test suite (32 tests) | ✅ | Found missing GET single-shipment tests; caught test count mismatch in README |
+| Docker Compose setup | ✅ | Pointed out `make dev` wasn't truly single-command; directed Docker approach |
+| README & documentation | ✅ | Cross-checked against assignment PDF 3 times; caught multiple inaccuracies |
+| DB viewer UI polish | ✅ | Flagged raw `nextval()` display as confusing; directed auto-increment badge |
+| Architecture & tooling decisions | Partial | Chose the full stack (PostgreSQL + FastAPI + React/Vite); AI executed |
+| PyCharm venv configuration | Partial | Verified config; debugged venv path breakage after directory move |
 
 ### One thing AI got wrong — and how I caught it
 
