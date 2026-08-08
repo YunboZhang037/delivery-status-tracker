@@ -400,9 +400,9 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 
 ### One thing AI got wrong — and how I caught it
 
-**Virtual environment path breakage**: After moving the project directory from one location to another, the Python virtual environment's `bin/` scripts had hardcoded shebangs pointing to the old path. The AI attempted to start the backend with the broken venv, producing confusing `bad interpreter` errors. I caught this by checking the actual shebang lines in `.venv/bin/uvicorn` and resolved it by recreating the venv from scratch with `python3 -m venv .venv` and reinstalling dependencies.
+**SQL injection protection was too shallow**: The AI built a `/api/db/query` endpoint that let users run raw SQL on the database. Its only defense was checking that the query started with `SELECT`. I pointed out this wasn't enough — a crafted query like `SELECT 1; DROP TABLE shipments` could still slip through. I directed the AI to add three more layers: reject queries containing semicolons, block dangerous keywords (DROP, INSERT, UPDATE, DELETE, etc.), and wrap every query in a `BEGIN READ ONLY` transaction so even if all else fails, no writes can happen.
 
-**Lesson**: Virtual environments are not portable across directory moves. Always recreate after relocating a project.
+**Lesson**: A single validation check is never sufficient for user-facing SQL. Layer your defenses so each layer catches what the previous one misses.
 
 ---
 
