@@ -18,6 +18,7 @@ class ShipmentOut(BaseModel):
 class StatusUpdateIn(BaseModel):
     """Request body for updating a shipment's status."""
     status: str = Field(..., description="New status: created, picked_up, in_transit, delivered, or failed")
+    note: str | None = Field(None, description="Optional note for the status change (e.g., failure reason)")
 
 
 class StatusHistoryOut(BaseModel):

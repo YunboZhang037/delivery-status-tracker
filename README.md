@@ -21,7 +21,7 @@ A full-stack web application for tracking shipment delivery statuses — built a
 | **Backend** | FastAPI REST API — list, filter, detail, status update, history | ✅ Done |
 | **State machine** | Server-side transition validation with 409 on invalid moves | ✅ Done |
 | **Frontend** | React UI — filter tabs, inline status updates, detail modal with history timeline | ✅ Done |
-| **Testing** | 28 tests (16 state machine + 8 API), all passing | ✅ Done |
+| **Testing** | 30 tests (20 state machine + 10 API), all passing | ✅ Done |
 | **DB viewer** | Built-in `/db` page for browsing tables and running queries | ✅ Done |
 | **Documentation** | README, API reference, architecture notes, AI usage disclosure | ✅ Done |
 
@@ -48,6 +48,23 @@ See [What I'd Do Next](#what-id-do-next) for the prioritized backlog of improvem
 ---
 
 ## Quick Start
+
+### Option A — Single command (recommended)
+
+```bash
+git clone <repo-url> delivery-status-tracker
+cd delivery-status-tracker
+
+# Install dependencies and seed the database (first time only)
+make setup
+
+# Start everything — PostgreSQL, backend API, and frontend UI
+make dev
+```
+
+This runs `scripts/dev.sh`, which starts PostgreSQL, seeds the database, and launches both the backend (`:8000`) and frontend (`:5173`) in parallel. Press `Ctrl+C` to stop all services.
+
+### Option B — Manual startup
 
 ### Prerequisites
 
@@ -116,6 +133,9 @@ The UI is now live at `http://localhost:5173`. You should see 20 shipments loade
 
 ```
 delivery-status-tracker/
+├── Makefile                        # make dev / make setup / make test / make seed
+├── scripts/
+│   └── dev.sh                      # Single-command startup (PostgreSQL + API + UI)
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
@@ -123,11 +143,11 @@ delivery-status-tracker/
 │   │   ├── models.py            # Shipment + StatusHistory ORM models
 │   │   ├── state_machine.py     # Transition rules + validation
 │   │   ├── schemas.py           # Pydantic request/response models
-│   │   ├── main.py              # FastAPI routes (list, filter, update, history)
+│   │   ├── main.py              # FastAPI routes + /db viewer
 │   │   └── seed.py              # CSV → PostgreSQL loader (idempotent)
 │   ├── tests/
-│   │   ├── test_state_machine.py   # 16 transition validation tests
-│   │   └── test_api.py             # 8 API endpoint tests
+│   │   ├── test_state_machine.py   # 20 transition validation tests
+│   │   └── test_api.py             # 10 API endpoint tests
 │   ├── requirements.txt
 │   └── shipments.csv            # 20 sample shipments
 ├── frontend/
@@ -190,8 +210,13 @@ Base URL: `http://localhost:8000`
 | `GET` | `/api/shipments` | List all shipments (20 records) |
 | `GET` | `/api/shipments?status=delivered` | Filter shipments by status |
 | `GET` | `/api/shipments/{reference}` | Get a single shipment with full status history |
-| `PATCH` | `/api/shipments/{reference}/status` | Update a shipment's status |
+| `PATCH` | `/api/shipments/{reference}/status` | Update a shipment's status (optional `note` field) |
 | `GET` | `/api/shipments/{reference}/history` | Get the full status-change history |
+| `GET` | `/db` | Visual database browser (HTML page) |
+| `GET` | `/api/db/tables` | List all tables with row counts |
+| `GET` | `/api/db/tables/{table}/structure` | Get column definitions for a table |
+| `GET` | `/api/db/tables/{table}/data` | Get all rows from a table |
+| `POST` | `/api/db/query?query=SELECT...` | Run a read-only SQL query |
 
 ### Example: Update Status
 
@@ -203,6 +228,13 @@ curl -X PATCH http://localhost:8000/api/shipments/TV-1002/status \
 
 # Response: 200 OK
 {"id": 2, "reference": "TV-1002", "customer_name": "...", "status": "picked_up", ...}
+```
+
+```bash
+# With an optional note (e.g., for failed deliveries)
+curl -X PATCH http://localhost:8000/api/shipments/TV-1002/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "failed", "note": "Customer not available for pickup"}'
 ```
 
 ```bash
@@ -274,17 +306,21 @@ Every status update atomically writes a `status_history` record and updates the 
 ## Testing
 
 ```bash
+# From the project root
+make test
+
+# Or manually:
 cd backend
 source .venv/bin/activate
 python -m pytest tests/ -v
 ```
 
-**28 tests, all passing:**
+**30 tests, all passing:**
 
 | Test File | Tests | Coverage |
 |---|---|---|
-| `test_state_machine.py` | 16 | All valid transitions, all invalid transitions (skip steps, backwards, terminal states), error message quality, unknown status handling |
-| `test_api.py` | 8 | Empty list, list with data, filter by status, valid update, invalid update (409), terminal state (409), not found (404), history recorded on update |
+| `test_state_machine.py` | 20 | All valid transitions, all invalid transitions (skip steps, backwards, terminal states), error message quality, unknown status handling |
+| `test_api.py` | 10 | Empty list, list with data, filter by status, valid update, invalid update (409), terminal state (409), not found (404), history recorded, note recorded, note optional |
 
 API tests use an in-memory SQLite database with FastAPI's `TestClient` — no external dependencies, fast execution.
 
@@ -355,8 +391,8 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 
 ### Priority 1 — Demo reliability & deployment
 
-1. **Docker Compose for single-command startup** — `docker compose up` spins up PostgreSQL, API, and UI with CSV auto-seeded. This is the highest-impact addition: it eliminates the "works on my machine" risk for anyone reviewing the submission.
-2. **CI pipeline** — GitHub Actions workflow that runs the 28-test suite on every push, ensuring the repo is always in a green state.
+1. **Docker Compose** — While `make dev` provides single-command startup locally, a `docker compose up` would eliminate all environment setup for reviewers (no Python/Node/PostgreSQL install needed). This is the highest-impact addition for submission reliability.
+2. **CI pipeline** — GitHub Actions workflow that runs the 30-test suite on every push, ensuring the repo is always in a green state.
 
 ### Priority 2 — Production readiness
 
@@ -368,15 +404,14 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 ### Priority 3 — UX polish
 
 7. **Optimistic updates** — Show the new status immediately in the UI before the server confirms, with rollback on error.
-8. **Status transition notes** — The `status_history.note` column exists but isn't exposed in the UI. Adding an optional "reason" field on failed transitions would be valuable for operations teams.
-9. **Frontend testing** — Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
-10. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
+8. **Frontend testing** — Vitest + React Testing Library tests for component rendering, filter behavior, and mutation flows.
+9. **WebSocket notifications** — Push status changes to all connected clients in real time, so multiple operators see updates without refreshing.
 
 ### What I intentionally did NOT do (and why)
 
 | Skipped | Reason |
 |---|---|
-| Docker Compose | Timebox — chose to ship a working local dev experience first |
+| Docker Compose | Timebox — `make dev` provides single-command local startup; Docker would add container complexity without demonstrating the core state machine |
 | User auth | Out of scope for the assignment brief; would add complexity without demonstrating the core state machine |
 | Pagination | 20 records don't warrant it; would add premature complexity |
 | i18n / a11y audit | Important for production, but the assignment focuses on the status tracking vertical slice |

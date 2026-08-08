@@ -76,6 +76,7 @@ def update_status(
         shipment_id=shipment.id,
         previous_status=shipment.status,
         new_status=payload.status,
+        note=payload.note,
     )
     shipment.status = payload.status
     db.add(history_entry)

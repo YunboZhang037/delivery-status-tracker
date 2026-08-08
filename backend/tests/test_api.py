@@ -112,3 +112,23 @@ class TestUpdateStatus:
         assert len(data) == 1
         assert data[0]["previous_status"] == "created"
         assert data[0]["new_status"] == "picked_up"
+
+    def test_note_recorded_on_update(self):
+        _seed_shipment(reference="TV-001", status="created")
+        client.patch(
+            "/api/shipments/TV-001/status",
+            json={"status": "failed", "note": "Customer not available for pickup"},
+        )
+        resp = client.get("/api/shipments/TV-001/history")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["new_status"] == "failed"
+        assert data[0]["note"] == "Customer not available for pickup"
+
+    def test_note_optional(self):
+        _seed_shipment(reference="TV-001", status="created")
+        resp = client.patch("/api/shipments/TV-001/status", json={"status": "picked_up"})
+        assert resp.status_code == 200
+        history = client.get("/api/shipments/TV-001/history").json()
+        assert history[0]["note"] is None

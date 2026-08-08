@@ -10,10 +10,16 @@ export default function ShipmentList() {
   const [selectedRef, setSelectedRef] = useState(null)
   const [toast, setToast] = useState(null)
 
-  const { data: shipments, isLoading, error } = useQuery({
-    queryKey: ['shipments', filter],
-    queryFn: () => fetchShipments(filter),
+  // Always fetch all shipments — client-side filtering ensures count badges
+  // are always accurate across all tabs, even when a specific filter is active.
+  const { data: allShipments, isLoading, error } = useQuery({
+    queryKey: ['shipments'],
+    queryFn: () => fetchShipments('all'),
   })
+
+  const shipments = filter === 'all'
+    ? allShipments
+    : allShipments?.filter((s) => s.status === filter)
 
   const { data: selectedShipment } = useQuery({
     queryKey: ['shipment', selectedRef],
@@ -27,8 +33,8 @@ export default function ShipmentList() {
   }
 
   function countByStatus(status) {
-    if (!shipments) return 0
-    return shipments.filter((s) => s.status === status).length
+    if (!allShipments) return 0
+    return allShipments.filter((s) => s.status === status).length
   }
 
   return (
@@ -49,11 +55,11 @@ export default function ShipmentList() {
         >
           All
           <span className="filter-count">
-            {shipments?.length || 0}
+            {allShipments?.length || 0}
           </span>
         </button>
         {STATUS_ORDER.map((status) => {
-          const count = filter === 'all' ? countByStatus(status) : 0
+          const count = countByStatus(status)
           return (
             <button
               key={status}
@@ -61,7 +67,7 @@ export default function ShipmentList() {
               onClick={() => setFilter(status)}
             >
               {STATUS_LABELS[status]}
-              {filter === 'all' && count > 0 && (
+              {count > 0 && (
                 <span className="filter-count">{count}</span>
               )}
             </button>
