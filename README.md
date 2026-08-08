@@ -9,9 +9,19 @@ A full-stack web application for tracking shipment delivery statuses — built a
 
 ## ⏱ Timebox Summary
 
-> **Effort: ~3.5 hours** | **Constraint: 3–4 hour timebox, due within 2 days**
+> **Effort: ~3.5 hours of focused work (2 sessions)** | **Constraint: 3–4 hour timebox, due within 2 days**
 >
 > *Per the assignment brief: "Stop at the timebox and write down what you would do next — unfinished-but-well-reasoned beats gold-plating."*
+
+### 🕐 Session timeline
+
+| Session | Time (local) | Duration | What happened |
+|---|---|---|---|
+| **Session 1** | 15:42 → 17:27 | 1h 45m | `Initial commit` → full vertical slice: DB schema, FastAPI backend, React frontend, README + AI usage note |
+| **⏸ Pause** | 17:27 → 19:26 | 1h 59m | Stopped at the 3–4h boundary — documented the pause and what I'd do next (`docs: add timebox summary…`) |
+| **Session 2** | 19:26 → 21:15 | 1h 49m | Resumed (`docs: continue to complete the project`) → review fixes, Docker Compose, SQL-injection hardening, tests expanded to 36, final polish |
+
+**Total focused effort: ~3h 34m** · Wall-clock span: 15:42 → 21:15 (5h 33m, including pause)
 
 ### ✅ Completed within the timebox
 
@@ -21,7 +31,7 @@ A full-stack web application for tracking shipment delivery statuses — built a
 | **Backend** | FastAPI REST API — list, filter, detail, status update, history | ✅ Done |
 | **State machine** | Server-side transition validation with 409 on invalid moves | ✅ Done |
 | **Frontend** | React UI — filter tabs, inline status updates, detail modal with history timeline | ✅ Done |
-| **Testing** | 32 tests (20 state machine + 12 API), all passing | ✅ Done |
+| **Testing** | 36 tests (20 state machine + 16 API), all passing | ✅ Done |
 | **DB viewer** | Built-in `/db` page for browsing tables and running queries | ✅ Done |
 | **Documentation** | README, API reference, architecture notes, AI usage disclosure | ✅ Done |
 
@@ -336,12 +346,12 @@ source .venv/bin/activate
 python -m pytest tests/ -v
 ```
 
-**32 tests, all passing:**
+**36 tests, all passing:**
 
 | Test File | Tests | Coverage |
 |---|---|---|
 | `test_state_machine.py` | 20 | All valid transitions, all invalid transitions (skip steps, backwards, terminal states), error message quality, unknown status handling |
-| `test_api.py` | 12 | Empty list, list with data, filter by status, get single shipment (200 + 404), valid update, invalid update (409), terminal state (409), not found (404), history recorded, note recorded, note optional |
+| `test_api.py` | 16 | Empty list, list with data, filter by status, get single shipment (200 + 404), valid update, invalid update (409), terminal state (409), not found (404), history recorded, note recorded, note optional, unknown status → 422 (regression), non-string status → 422, missing status field → 422 |
 
 API tests use an in-memory SQLite database with FastAPI's `TestClient` — no external dependencies, fast execution.
 
@@ -393,7 +403,7 @@ API tests use an in-memory SQLite database with FastAPI's `TestClient` — no ex
 | SQLAlchemy models, schemas, state machine | ✅ | Verified state transitions against PDF spec; caught `datetime.utcnow()` deprecation |
 | FastAPI routes and seed script | ✅ | Identified SQL injection risk in `/api/db/query`; directed 4-layer defense |
 | React components and API client | ✅ | Flagged `window.prompt()` as poor UX; caught filter badge disappearing bug |
-| Test suite (32 tests) | ✅ | Found missing GET single-shipment tests; caught test count mismatch in README |
+| Test suite (36 tests) | ✅ | Found missing GET single-shipment tests; caught test count mismatch in README |
 | Docker Compose setup | ✅ | Pointed out `make dev` wasn't truly single-command; directed Docker approach |
 | README & documentation | ✅ | Cross-checked against assignment PDF 3 times; caught multiple inaccuracies |
 | DB viewer UI polish | ✅ | Flagged raw `nextval()` display as confusing; directed auto-increment badge |
