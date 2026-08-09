@@ -65,8 +65,17 @@ See [What I'd Do Next](#what-id-do-next) for the prioritized backlog of improvem
 git clone https://github.com/YunboZhang037/delivery-status-tracker.git delivery-status-tracker
 cd delivery-status-tracker
 
-# One command — spins up PostgreSQL, backend API, and frontend UI
-docker compose up
+# One‑command startup: spins up PostgreSQL, backend API and frontend UI
+# docker compose up
+
+# If you encounter insufficient memory, build services step‑by‑step
+docker compose build backend
+docker compose build frontend
+
+docker compose up -d
+
+# View runtime logs
+# docker compose logs -f
 ```
 
 That's it. No PostgreSQL, Python, or Node.js installation required — Docker handles everything:
