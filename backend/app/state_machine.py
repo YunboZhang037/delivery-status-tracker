@@ -1,18 +1,19 @@
 """Shipment status state machine.
 
 Lifecycle: created -> picked_up -> in_transit -> delivered
-`failed` is allowed from any non-delivered status.
-`delivered` and `failed` are terminal states.
+`failed` and `returned` are allowed from any active status.
+`delivered`, `failed`, and `returned` are terminal states.
 """
 
-VALID_STATUSES = {"created", "picked_up", "in_transit", "delivered", "failed"}
+VALID_STATUSES = {"created", "picked_up", "in_transit", "delivered", "failed", "returned"}
 
 VALID_TRANSITIONS: dict[str, set[str]] = {
-    "created":    {"picked_up", "failed"},
-    "picked_up":  {"in_transit", "failed"},
-    "in_transit": {"delivered", "failed"},
+    "created":    {"picked_up", "failed", "returned"},
+    "picked_up":  {"in_transit", "failed", "returned"},
+    "in_transit": {"delivered", "failed", "returned"},
     "delivered":  set(),
     "failed":     set(),
+    "returned":   set(),
 }
 
 
